@@ -1,0 +1,18 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><link rel="icon" href="data:,"><title>Avatar asset inspection — development only</title>
+<style>body{margin:0;background:#efede6}canvas{display:block}#status{position:absolute;left:24px;top:20px;font:13px system-ui;color:#30352e}</style>
+<div id="status">Inspecting supplied mesh…</div>
+<script type="importmap">{"imports":{"three":"/node_modules/three/build/three.module.js","three/addons/":"/node_modules/three/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from 'three';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(1);renderer.setClearColor('#efede6');document.body.appendChild(renderer.domElement);
+const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(35,innerWidth/innerHeight,.01,30);camera.position.set(0,1.12,4.4);camera.lookAt(0,1.05,0);
+scene.add(new THREE.HemisphereLight('#fff7e9','#75776c',2));const key=new THREE.DirectionalLight('#fff3de',2.4);key.position.set(2,4,4);scene.add(key);const rim=new THREE.DirectionalLight('#dce8f5',1);rim.position.set(-2,3,-3);scene.add(rim);
+
+try{
+ const {acquireCharacter}=await import('/src/cinematic/CharacterAsset.ts');const lease=acquireCharacter(),character=await lease.ready;scene.add(character.object);
+ window.sample=(frame,time=0,angle=0)=>{character.object.rotation.y=angle;character.animation.evaluate(frame,time);renderer.render(scene,camera);return character.animation.snapshot();};
+ window.character=character;window.THREE=THREE;window.scene=scene;window.renderer=renderer;window.camera=camera;
+ window.sample({section:'contact',progress:1});document.body.dataset.ready='true';document.querySelector('#status').textContent='Animated character inspection';
+}catch(error){console.error(error);document.body.dataset.ready='error';}
+</script></html>

@@ -1,0 +1,15 @@
+/* Small additions to the approved visual language. */
+.hero-project-action{display:inline-flex;align-items:center;justify-content:space-between;gap:32px;min-height:44px;margin-top:20px;border-bottom:1px solid #81765f;font-size:12px;font-weight:500;pointer-events:auto;}
+.hero-project-action span{font-size:17px;transition:transform .2s;}.hero-project-action:hover span{transform:translate(2px,-2px);}
+.section-navigation-cover{position:fixed;inset:0;z-index:100;background:#f1eee5;opacity:0;visibility:hidden;pointer-events:none;}
+.opening[data-navigating='true'] .section-navigation-cover{pointer-events:auto;}
+@media(max-width:700px){.hero-project-action{margin-top:0;font-size:11px;gap:26px;min-height:44px;}.hero-introduction .role-label{margin-bottom:0;}}
+@media(max-height:500px) and (min-width:701px){.hero-project-action{margin-top:7px;font-size:10px;}}
+@media(prefers-reduced-motion:reduce){.hero-project-action span{transition:none;}}
+.hero-introduction .intro-detail{opacity:.8;}.chapter-navigation button{opacity:.78;}.location>span:last-child{opacity:.8;}.experience-index{opacity:.82;}
+@media(max-width:700px){.hero-introduction{top:17%;}}
+@media(max-height:700px) and (max-width:700px){.hero-introduction{top:21%;}}
+
+/* Reuse the existing transition cover if a fast seek outruns character loading. */
+.opening[data-avatar-loading-visible='true'] .section-navigation-cover{opacity:1!important;visibility:visible!important;}
+.opening[data-avatar-loading-visible='true'] .section-navigation-cover::after{content:'Preparing the journey…';position:absolute;inset:48% 0 auto;text-align:center;font:italic 28px 'Instrument Serif',serif;color:#393a34;}

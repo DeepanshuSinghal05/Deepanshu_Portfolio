@@ -1,0 +1,24 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><link rel="icon" href="data:,"><title>Avatar asset inspection — development only</title>
+<style>body{margin:0;background:#efede6}canvas{display:block}#status{position:absolute;left:24px;top:20px;font:13px system-ui;color:#30352e}</style>
+<div id="status">Inspecting supplied mesh…</div>
+<script type="importmap">{"imports":{"three":"/node_modules/three/build/three.module.js","three/addons/":"/node_modules/three/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from 'three';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(1);renderer.setClearColor('#efede6');document.body.appendChild(renderer.domElement);
+const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(35,innerWidth/innerHeight,.01,30);camera.position.set(0,1.12,4.4);camera.lookAt(0,1.05,0);
+scene.add(new THREE.HemisphereLight('#fff7e9','#75776c',2));const key=new THREE.DirectionalLight('#fff3de',2.4);key.position.set(2,4,4);scene.add(key);const rim=new THREE.DirectionalLight('#dce8f5',1);rim.position.set(-2,3,-3);scene.add(rim);
+try{
+ const gltf=await new GLTFLoader().loadAsync('/project_story_assets/new_model.glb');const model=gltf.scene;model.traverse(o=>{if(o.isSkinnedMesh)o.skeleton.pose()});model.updateMatrixWorld(true);const bounds=new THREE.Box3().setFromObject(model),size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3());
+ const correction=new THREE.Group();correction.scale.setScalar(2.1/size.y);model.position.set(-center.x,-bounds.min.y,-center.z);correction.add(model);scene.add(correction);
+ const meshes=[],textures=new Map();model.traverse(o=>{if(o.isMesh){meshes.push({name:o.name,skinned:!!o.isSkinnedMesh,vertices:o.geometry.attributes.position.count,triangles:(o.geometry.index?.count||o.geometry.attributes.position.count)/3,hasJoints:!!o.geometry.attributes.skinIndex,hasWeights:!!o.geometry.attributes.skinWeight});for(const mat of Array.isArray(o.material)?o.material:[o.material])for(const value of Object.values(mat))if(value?.isTexture)textures.set(value.uuid,{width:value.image.width,height:value.image.height,colorSpace:value.colorSpace});}});
+ window.audit={sourceBounds:{min:bounds.min.toArray(),max:bounds.max.toArray()},normalizedHeight:2.1,scale:correction.scale.x,meshes,textures:[...textures.values()],clips:gltf.animations.map(a=>a.name),warnings:[]};
+ window.view=(angle=0)=>{correction.rotation.y=angle;renderer.render(scene,camera);return {calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,geometries:renderer.info.memory.geometries,textures:renderer.info.memory.textures};};
+ const mixer=new THREE.AnimationMixer(model);const actions=gltf.animations.map(c=>mixer.clipAction(c));
+ window.gltf=gltf;window.model=model;window.THREE=THREE;window.correction=correction;window.mixer=mixer;
+ window.sample=(index,time,angle=0)=>{actions.forEach((a,i)=>{a.enabled=true;a.setEffectiveWeight(i===index?1:0);a.play();a.time=time;});mixer.update(0);model.updateMatrixWorld(true);window.view(angle);const joints={};model.traverse(o=>{if(o.isBone&&/Hips|Arm$|ForeArm$|Head$|UpLeg$|Leg$|Foot$|ToeBase$|Shoulder$/.test(o.name))joints[o.name]={p:o.position.toArray(),q:o.quaternion.toArray(),world:o.getWorldPosition(new THREE.Vector3()).toArray()};});return joints;};
+ window.audit.animations=gltf.animations.map(c=>({name:c.name,duration:c.duration,tracks:c.tracks.map(t=>({name:t.name,type:t.ValueTypeName,keys:t.times.length,start:Array.from(t.values.slice(0,t.getValueSize())),end:Array.from(t.values.slice(-t.getValueSize()))}))}));
+ window.audit.render=window.view();document.querySelector('#status').textContent='Supplied model · 65 joints · four embedded animations';document.body.dataset.ready='true';
+ window.addEventListener('beforeunload',()=>{const geometries=new Set(),materials=new Set(),maps=new Set();model.traverse(o=>{if(o.isMesh){geometries.add(o.geometry);for(const m of Array.isArray(o.material)?o.material:[o.material]){materials.add(m);for(const v of Object.values(m))if(v?.isTexture)maps.add(v);}}});maps.forEach(t=>t.dispose());materials.forEach(m=>m.dispose());geometries.forEach(g=>g.dispose());renderer.dispose();});
+}catch(error){document.querySelector('#status').textContent='Inspection failed';window.audit={error:String(error)};document.body.dataset.ready='error';}
+</script></html>

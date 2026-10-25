@@ -1,0 +1,74 @@
+import gsap from 'gsap';
+import { projectScroll, projectExtent } from '../projects/projectConfig';
+import { createProjectPresentation } from '../projects/projectPresentation';
+import { cinematicConfig as C, range, smooth } from '../cinematic/config';
+import { storyConfig as S } from './storyConfig';
+import { storyChapters } from './storyContent';
+import { experienceScroll } from '../experience/experienceContent';
+import { createExperiencePresentation } from '../experience/ExperiencePresentation';
+import {contactScroll} from '../contact/contactContent';
+import {createContactPresentation} from '../contact/ContactPresentation';
+export function createStoryDirector(root:HTMLElement,mobile:boolean,reduced:boolean){
+  const stage=root.querySelector<HTMLElement>('[data-stage]')!,state={progress:0};
+  const start=()=>stage.clientHeight*((reduced?1.2:mobile?2.7:3.2)+(reduced?C.scroll.reduced:mobile?C.scroll.mobile:C.scroll.desktop)/100);
+  const length=(reduced?S.scroll.reduced:mobile?S.scroll.mobile:S.scroll.desktop)/100;
+  const distance=()=>stage.clientHeight*length;
+  const projectLength=(reduced?projectScroll.reduced:mobile?projectScroll.mobile:projectScroll.desktop)*projectExtent/100;
+  const experienceLength=(reduced?experienceScroll.reduced:mobile?experienceScroll.mobile:experienceScroll.desktop)/100;
+  const contactLength=(reduced?contactScroll.reduced:mobile?contactScroll.mobile:contactScroll.desktop)/100;
+  const work=root.querySelector<HTMLElement>('[data-selected-work]')!;
+  const experienceEnd=()=>start()+distance()+stage.clientHeight*(projectLength+experienceLength);
+  const workStart=()=>experienceEnd()+stage.clientHeight;
+  const contactStart=()=>workStart()+work.offsetHeight;
+  const layout=()=>{root.style.setProperty('--work-offset',`${experienceEnd()}px`);root.style.height=`${contactStart()+stage.clientHeight*(contactLength+1)}px`;root.dataset.workStart=String(workStart());root.dataset.contactStart=String(contactStart());root.dataset.contactDistance=String(stage.clientHeight*contactLength);};
+  layout();
+  const projectState={progress:0},presentProjects=createProjectPresentation(root,mobile,reduced);
+  const experienceState={progress:0},presentExperience=createExperiencePresentation(root,reduced);
+  const contactState={progress:0},presentContact=createContactPresentation(root,reduced);
+  let projectPresentationKey='';
+  const overlay=root.querySelector<HTMLElement>('[data-story-overlay]')!;
+  const intro=root.querySelector<HTMLElement>('[data-story-introduction]')!;
+  const greeting=root.querySelector<HTMLElement>('[data-intro-greeting]')!,name=root.querySelector<HTMLElement>('[data-intro-name]')!,copy=root.querySelector<HTMLElement>('[data-intro-copy]')!,role=root.querySelector<HTMLElement>('[data-intro-role]')!;
+  const chapters=storyChapters.map(c=>({data:c,element:root.querySelector<HTMLElement>(`[data-story-chapter="${c.id}"]`)!}));
+  const handoff=root.querySelector<HTMLElement>('[data-story-handoff]')!,cue=root.querySelector<HTMLElement>('[data-story-scroll-cue]')!;
+  const fallback=root.querySelector<HTMLElement>('[data-story-fallback]')!;
+  const show=(element:HTMLElement,value:number,travel=16)=>{
+    element.style.opacity=String(value);element.style.visibility=value>0?'visible':'hidden';
+    element.style.transform=`translate3d(0,${reduced?0:(1-value)*travel}px,0)`;
+  };
+  const update=()=>{
+    const p=state.progress,active=p>0;
+    root.dataset.storyProgress=p.toFixed(5);root.dataset.storyActive=String(active);
+    const chapter=storyChapters.find(c=>p>=c.start&&p<c.end);
+    const phase=p<.26?'introduction':p>=.9?'handoff':chapter?.id??'transition';
+    root.dataset.storyPhase=phase;
+    overlay.style.visibility=active?'visible':'hidden';overlay.style.opacity=String(smooth(range(p,.015,.05)));
+    const exit=1-smooth(range(p,.19,.25));
+    show(intro,exit,0);show(greeting,smooth(range(p,.035,.065)));show(name,smooth(range(p,.055,.095)));
+    show(copy,smooth(range(p,.085,.125)));show(role,smooth(range(p,.105,.14)));
+    for(const {data,element} of chapters){const alpha=smooth(range(p,data.start,data.reveal-.008))*(1-smooth(range(p,data.hold+.008,data.end)));show(element,alpha);}
+    show(handoff,smooth(range(p,.955,.985)));show(cue,smooth(range(p,.12,.15))*(1-smooth(range(p,.20,.25))),0);
+    const announcement=root.querySelector('[data-story-announcement]')!;
+    const label=active?(p>=.985?'Story complete. What I build comes next.':chapter?.eyebrow??(p<.19?"Hi, I'm Deepanshu.":'')):'';
+    if(announcement.textContent!==label)announcement.textContent=label;
+    fallback.style.opacity=String(smooth(range(p,0,.045)));fallback.style.visibility=active?'visible':'hidden';
+    fallback.querySelector('svg')?.setAttribute('viewBox',mobile?'300 0 400 700':'0 0 1000 700');
+    fallback.querySelector('[data-story-fallback-line]')?.setAttribute('stroke-dasharray','1');
+    fallback.querySelector('[data-story-fallback-line]')?.setAttribute('stroke-dashoffset',String(1-smooth(range(p,.155,.95))));
+    fallback.querySelector('[data-story-fallback-structure]')?.setAttribute('opacity',String(smooth(range(p,.26,.8))));
+    fallback.querySelector('[data-story-fallback-avatar]')?.setAttribute('transform',mobile?'translate(585 510)':'translate(710 460)');
+    const key=`${projectState.progress}:${experienceState.progress>0}:${root.dataset.webglReady}`;
+    if(key!==projectPresentationKey){presentProjects.update(projectState.progress);projectPresentationKey=key;}
+    presentExperience.update(experienceState.progress);
+    presentContact.update(contactState.progress);
+  };
+  const timeline=gsap.timeline({scrollTrigger:{id:'phase-three',trigger:root,start:()=>`top+=${start()} top`,end:()=>`+=${distance()}`,scrub:true,invalidateOnRefresh:true},onUpdate:update});
+  timeline.to(state,{progress:1,duration:1,ease:'none'});update();
+  const projectTimeline=gsap.timeline({scrollTrigger:{id:'phase-four-b',trigger:root,start:()=>`top+=${start()+distance()} top`,end:()=>`+=${stage.clientHeight*projectLength}`,scrub:true,invalidateOnRefresh:true},onUpdate:update});
+  projectTimeline.to(projectState,{progress:projectExtent,duration:1,ease:'none'});update();
+  const experienceTimeline=gsap.timeline({scrollTrigger:{id:'phase-five-six',trigger:root,start:()=>`top+=${start()+distance()+stage.clientHeight*projectLength} top`,end:()=>`+=${stage.clientHeight*experienceLength}`,scrub:true,invalidateOnRefresh:true},onUpdate:update});
+  experienceTimeline.to(experienceState,{progress:1,duration:1,ease:'none'});update();
+  const contactTimeline=gsap.timeline({scrollTrigger:{id:'phase-eight',trigger:root,start:()=>`top+=${contactStart()} top`,end:()=>`+=${stage.clientHeight*contactLength}`,scrub:true,invalidateOnRefresh:true},onUpdate:update});
+  contactTimeline.to(contactState,{progress:1,duration:1,ease:'none'});update();
+  return {state,timeline,projectState,projectTimeline,experienceState,experienceTimeline,contactState,contactTimeline,layout,workStart,contactStart,dispose:presentProjects.dispose};
+}

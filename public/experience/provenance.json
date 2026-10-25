@@ -1,0 +1,80 @@
+[
+  {
+    "source": "experience/colorbar/loyalty_member_serach.png",
+    "crop": [
+      250,
+      125,
+      1655,
+      960
+    ],
+    "file": "public\\experience\\colorbar-loyalty-desktop.webp",
+    "width": 1200,
+    "height": 713,
+    "bytes": 22630
+  },
+  {
+    "source": "experience/colorbar/loyalty_member_serach.png",
+    "crop": [
+      250,
+      125,
+      1655,
+      960
+    ],
+    "file": "public\\experience\\colorbar-loyalty-mobile.webp",
+    "width": 640,
+    "height": 380,
+    "bytes": 8698
+  },
+  {
+    "source": "experience/Acmegrade/Screenshot 2025-06-22 015648.png",
+    "crop": [
+      0,
+      108,
+      1918,
+      619
+    ],
+    "file": "public\\experience\\acmegrade-cart-desktop.webp",
+    "width": 1200,
+    "height": 320,
+    "bytes": 12180
+  },
+  {
+    "source": "experience/Acmegrade/Screenshot 2025-06-22 015648.png",
+    "crop": [
+      0,
+      108,
+      1918,
+      619
+    ],
+    "file": "public\\experience\\acmegrade-cart-mobile.webp",
+    "width": 640,
+    "height": 171,
+    "bytes": 5120
+  },
+  {
+    "source": "experience/Acmegrade/Screenshot 2025-06-22 015753.png",
+    "crop": [
+      475,
+      438,
+      1426,
+      926
+    ],
+    "file": "public\\experience\\acmegrade-product-desktop.webp",
+    "width": 951,
+    "height": 488,
+    "bytes": 11444
+  },
+  {
+    "source": "experience/Acmegrade/Screenshot 2025-06-22 015753.png",
+    "crop": [
+      475,
+      438,
+      1426,
+      926
+    ],
+    "file": "public\\experience\\acmegrade-product-mobile.webp",
+    "width": 640,
+    "height": 328,
+    "bytes": 7518
+  }
+]
